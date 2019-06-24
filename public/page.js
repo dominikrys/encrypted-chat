@@ -1,4 +1,4 @@
-/**
+/*
 * page.js - handles clientside
 */
 
@@ -15,6 +15,7 @@ const vm = new Vue ({
             notifications: [],
             currentRoom: null,
             pendingRoom: Math.floor(Math.random() * 1000),
+            nickname: null,
             draft: ''
         }
     },
@@ -31,6 +32,12 @@ const vm = new Vue ({
         // Initialize socketio
         this.socket = io()
         this.setupSocketListeners()
+
+        // Set default nickname from key snippet
+        this.setNickname();
+        this.nickname = this.getKeySnippet(this.originPublicKey)
+
+        // TODO: send name to server
     },
     methods: {
         /** Setup Socket.io event listeners */
@@ -135,6 +142,11 @@ const vm = new Vue ({
                     // Emit room join request.
                     this.socket.emit('JOIN', this.pendingRoom)
                 }
+            },
+
+            /** Change nickname*/
+            setNickname () {
+                //TODO
             },
 
             /** Add message to UI, and scroll the view to display the new message. */

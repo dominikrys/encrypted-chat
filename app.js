@@ -1,4 +1,4 @@
-/**
+/*
 * app.js - handles serverside
 */
 
@@ -61,6 +61,11 @@ io.on('connection', (socket) => {
     /** Broadcast a new publickey to the room */
     socket.on('PUBLIC_KEY', (key) => {
         socket.broadcast.to(currentRoom).emit('PUBLIC_KEY', key)
+    })
+
+    /** Rename client */
+    socket.on('SET_NAME', () => {
+        // TODO
     })
 
     /** Broadcast a disconnection notification to the room */

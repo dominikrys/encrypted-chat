@@ -26,6 +26,13 @@
             </div>
         </div>
         <div class="info-container full-width">
+            <!--TODO: think of a better way of implementing this?-->
+            <h1>SET NICKNAME</h1>
+            <div class="room-select">
+                <input type="text" class="full-width" placeholder="Nickname" id="name-input" v-model="nickname" @keyup.enter="setNickname()">
+                <input class="yellow-button full-width" type="submit" v-on:click="setNickname()" value="SET NAME">
+            </div>
+            <div class="divider"></div>
             <h1>CHATROOM</h1>
             <div class="room-select">
                 <input type="text" class="full-width" placeholder="Room Name" id="room-input" v-model="pendingRoom" @keyup.enter="joinRoom()">
@@ -65,9 +72,9 @@
             > <input class="message-input" type="text" placeholder="Message" v-model="draft" @keyup.enter="sendMessage()">
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.1/vue.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.slim.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/immutable/3.8.1/immutable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/immutable/3.8.2/immutable.min.js"></script>
     <script src="/page.js"></script>
 </body>
 </html>

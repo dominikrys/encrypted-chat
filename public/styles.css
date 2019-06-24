@@ -144,6 +144,17 @@ p { font-size: x-small; }
     padding: 4px;
 }
 
+#name-input {
+    flex: 0 0 60%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--light-grey);
+    border-top: 1px solid var(--light-grey);
+    border-left: 1px solid var(--light-grey);
+    color: var(--light-grey);
+    padding: 4px;
+}
+
 .yellow-button {
     flex: 0 0 30%;
     background: none;
