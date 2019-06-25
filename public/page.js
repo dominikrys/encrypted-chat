@@ -34,10 +34,7 @@ const vm = new Vue ({
         this.setupSocketListeners()
 
         // Set default nickname from key snippet
-        this.setNickname();
-        this.nickname = this.getKeySnippet(this.originPublicKey)
-
-        // TODO: send name to server
+        this.setNickname(this.getKeySnippet(this.originPublicKey));
     },
     methods: {
         /** Setup Socket.io event listeners */
@@ -145,8 +142,12 @@ const vm = new Vue ({
             },
 
             /** Change nickname*/
-            setNickname () {
-                //TODO
+            setNickname (nickname) {
+                // Set nickname to specified nickname
+                this.nickname = nickname
+
+                // Send nickname to server along with key
+                this.socket.emit('SET_NAME', [this.originPublicKey, this.nickname])
             },
 
             /** Add message to UI, and scroll the view to display the new message. */

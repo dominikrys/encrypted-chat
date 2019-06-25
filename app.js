@@ -14,6 +14,9 @@ const io = require('socket.io')(http)
 // Serve web app directory
 app.use(express.static('public'))
 
+// Map holding all keys and their nicknames
+var nicknameMap = new Map()
+
 /** Manage behavior of each client socket connection */
 io.on('connection', (socket) => {
     console.log(`User Connected - Socket ID ${socket.id}`)
@@ -64,8 +67,14 @@ io.on('connection', (socket) => {
     })
 
     /** Rename client */
-    socket.on('SET_NAME', () => {
-        // TODO
+    socket.on('SET_NAME', (nicknameArray) => {
+        // Remove the key's current nickname if already in the nickname map
+        if (nicknameMap.has(nicknameArray[0])) {
+            nicknameMap.delete(nicknameArray[0])
+        }
+
+        // Set new nickname
+        nicknameMap.set(nicknameArray[0], nicknameArray[1])
     })
 
     /** Broadcast a disconnection notification to the room */
