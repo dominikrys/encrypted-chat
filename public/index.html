@@ -29,7 +29,7 @@
             <!--TODO: think of a better way of implementing this?-->
             <h1>SET NICKNAME</h1>
             <div class="room-select">
-                <input type="text" class="full-width" placeholder="Nickname" id="name-input" v-model="nickname" @keyup.enter="setNickname()">
+                <input type="text" class="full-width" placeholder="Nickname" id="name-input" v-model="nickname" @keyup.enter="sendPublicKey()">
                 <input class="yellow-button full-width" type="submit" v-on:click="setNickname()" value="SET NAME">
             </div>
             <div class="divider"></div>

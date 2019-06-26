@@ -75,7 +75,7 @@ const vm = new Vue ({
                 this.nicknameMap = new Map()
             })
 
-            // Save public key when received
+            // Save public key and name when received
             this.socket.on('PUBLIC_KEY', (key) => {
                 // Check if user already in nicknameMap
                 if (this.nicknameMap.has(key[0])){
@@ -153,12 +153,6 @@ const vm = new Vue ({
                 }
             },
 
-            /** Change nickname*/
-            setNickname () {
-                // TODO: only send nickname change event instead of whole key?
-                this.sendPublicKey()
-            },
-
             /** Add message to UI, and scroll the view to display the new message. */
             addMessage (message) {
                 this.messages.push(message)
@@ -198,7 +192,7 @@ const vm = new Vue ({
                 })
             },
 
-            /** Emit the public key to all users in the chatroom */
+            /** Emit the public key with name to all users in the chatroom */
             sendPublicKey () {
                 if (this.originPublicKey) {
                     this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
