@@ -25,6 +25,7 @@ textarea:focus, input:focus { outline: none; }
 .yellow { color: yellow; }
 .center-x { margin: 0 auto; }
 .center-text { width: 100%; text-align: center; }
+.timestamp {color: grey; font-size: xx-small; }
 
 h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
 h1 { font-size: medium; }

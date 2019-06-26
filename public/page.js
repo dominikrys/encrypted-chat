@@ -61,6 +61,9 @@ const vm = new Vue({
                     // Fill in message sender - obtained from local map so can't be spoofed
                     message.senderNickname = this.nicknameMap.get(message.sender)
 
+                    // Update message with newest received timestamp
+                    message.time = new Date().toLocaleTimeString()
+
                     // Push message to message array
                     this.messages.push(message)
                 }
@@ -128,7 +131,8 @@ const vm = new Vue({
                 text: this.draft,
                 recipient: this.destinationPublicKey,
                 sender: this.originPublicKey,
-                senderNickname: this.nickname // This is set when message received
+                senderNickname: this.nickname,
+                time: new Date().toLocaleTimeString()
             })
 
             // Reset the UI input draft text
