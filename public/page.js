@@ -30,12 +30,12 @@ const vm = new Vue ({
         this.originPublicKey = await this.getWebWorkerResponse('generate-keys')
         this.addNotification(`Keypair Generated - ${this.getKeySnippet(this.originPublicKey)}`)
 
+        // Set default nickname from key snippet
+        this.nickname = this.getKeySnippet(this.originPublicKey);
+
         // Initialize socketio
         this.socket = io()
         this.setupSocketListeners()
-
-        // Set default nickname from key snippet
-        this.setNickname(this.getKeySnippet(this.originPublicKey));
     },
     methods: {
         /** Setup Socket.io event listeners */
@@ -77,15 +77,14 @@ const vm = new Vue ({
 
             // Save public key when received
             this.socket.on('PUBLIC_KEY', (key) => {
-                console.log(key)
                 this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
                 this.destinationPublicKey = key[0]
 
                 // Check if user already in nicknameMap
                 if (this.nicknameMap.has(key[0])){
-                    this.addNotification(`${this.nicknameMap.get(key[1])} has changed their name to ${key[1]}`)
+                    this.addNotification(`${this.nicknameMap.get(key[0])} has changed their name to ${key[1]}`)
                 }
-
+                
                 // Update user's name
                 this.nicknameMap.set(key[0], key[1])
             })
