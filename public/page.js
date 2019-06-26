@@ -15,8 +15,9 @@ const vm = new Vue ({
             notifications: [],
             currentRoom: null,
             pendingRoom: Math.floor(Math.random() * 1000),
+            draft: '',
             nickname: null,
-            draft: ''
+            nicknameMap: null
         }
     },
     async created () {
@@ -69,6 +70,9 @@ const vm = new Vue ({
                 this.currentRoom = newRoom
                 this.addNotification(`Joined Room - ${this.currentRoom}`)
                 this.sendPublicKey()
+
+                // Clear stored names when room Joined
+                nicknameMap = new Map()
             })
 
             // Save public key when received
@@ -143,11 +147,7 @@ const vm = new Vue ({
 
             /** Change nickname*/
             setNickname (nickname) {
-                // Set nickname to specified nickname
-                this.nickname = nickname
 
-                // Send nickname to server along with key
-                this.socket.emit('SET_NAME', [this.originPublicKey, this.nickname])
             },
 
             /** Add message to UI, and scroll the view to display the new message. */
