@@ -77,14 +77,14 @@ const vm = new Vue ({
 
             // Save public key when received
             this.socket.on('PUBLIC_KEY', (key) => {
-                this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
-                this.destinationPublicKey = key[0]
-
                 // Check if user already in nicknameMap
                 if (this.nicknameMap.has(key[0])){
                     this.addNotification(`${this.nicknameMap.get(key[0])} has changed their name to ${key[1]}`)
+                } else {
+                    this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
+                    this.destinationPublicKey = key[0]
                 }
-                
+
                 // Update user's name
                 this.nicknameMap.set(key[0], key[1])
             })
