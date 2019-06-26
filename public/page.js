@@ -72,13 +72,22 @@ const vm = new Vue ({
                 this.sendPublicKey()
 
                 // Clear stored names when room Joined
-                nicknameMap = new Map()
+                this.nicknameMap = new Map()
             })
 
             // Save public key when received
             this.socket.on('PUBLIC_KEY', (key) => {
-                this.addNotification(`Public Key Received - ${this.getKeySnippet(key)}`)
-                this.destinationPublicKey = key
+                console.log(key)
+                this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
+                this.destinationPublicKey = key[0]
+
+                // Check if user already in nicknameMap
+                if (this.nicknameMap.has(key[0])){
+                    this.addNotification(`${this.nicknameMap.get(key[1])} has changed their name to ${key[1]}`)
+                }
+
+                // Update user's name
+                this.nicknameMap.set(key[0], key[1])
             })
 
             // Clear destination public key if other user leaves room
@@ -146,8 +155,9 @@ const vm = new Vue ({
             },
 
             /** Change nickname*/
-            setNickname (nickname) {
-
+            setNickname () {
+                // TODO: only send nickname change event instead of whole key?
+                this.sendPublicKey()
             },
 
             /** Add message to UI, and scroll the view to display the new message. */
@@ -192,7 +202,7 @@ const vm = new Vue ({
             /** Emit the public key to all users in the chatroom */
             sendPublicKey () {
                 if (this.originPublicKey) {
-                    this.socket.emit('PUBLIC_KEY', this.originPublicKey)
+                    this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
                 }
             },
 
