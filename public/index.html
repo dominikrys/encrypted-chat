@@ -19,8 +19,8 @@
             <div class="message-list">
                 <div class="message full-width" v-for="message in messages">
                     <p>
-                        <span v-bind:class="(message.sender == originPublicKey) ? 'green' : 'red'">{{ getKeySnippet(message.sender) }}</span>
-                        > {{ message.text }}
+                        <span v-bind:class="(message.sender == originPublicKey) ? 'green' : 'red'">{{ message.senderNickname }} [{{ getShortKeySnippet(message.sender) }}]</span>
+                        : {{ message.text }}
                     </p>
                 </div>
             </div>
@@ -29,8 +29,8 @@
             <!--TODO: think of a better way of implementing this?-->
             <h1>SET NICKNAME</h1>
             <div class="room-select">
-                <input type="text" class="full-width" placeholder="Nickname" id="name-input" v-model="nickname" @keyup.enter="sendPublicKey()">
-                <input class="yellow-button full-width" type="submit" v-on:click="setNickname()" value="SET NAME">
+                <input type="text" class="full-width" placeholder="Nickname" id="name-input" v-model="nickname" @keyup.enter="changeNickname()">
+                <input class="yellow-button full-width" type="submit" v-on:click="changeNickname()" value="SET NAME">
             </div>
             <div class="divider"></div>
             <h1>CHATROOM</h1>

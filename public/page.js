@@ -3,9 +3,9 @@
 */
 
 /** The core Vue instance controlling the UI */
-const vm = new Vue ({
+const vm = new Vue({
     el: '#vue-instance',
-    data () {
+    data() {
         return {
             cryptWorker: null,
             socket: null,
@@ -20,7 +20,7 @@ const vm = new Vue ({
             nicknameMap: null
         }
     },
-    async created () {
+    async created() {
         this.addNotification('Welcome! Generating a new keypair now.')
 
         // Initialize crypto webworker thread
@@ -30,8 +30,10 @@ const vm = new Vue ({
         this.originPublicKey = await this.getWebWorkerResponse('generate-keys')
         this.addNotification(`Keypair Generated - ${this.getKeySnippet(this.originPublicKey)}`)
 
-        // Set default nickname from key snippet
+        // Set default nickname from key snippet and add it to the nicknameMap
         this.nickname = this.getKeySnippet(this.originPublicKey);
+        this.nicknameMap = new Map()
+        this.nicknameMap.set(this.originPublicKey, this.nickname)
 
         // Initialize socketio
         this.socket = io()
@@ -39,7 +41,7 @@ const vm = new Vue ({
     },
     methods: {
         /** Setup Socket.io event listeners */
-        setupSocketListeners () {
+        setupSocketListeners() {
             // Automatically join default room on connect
             this.socket.on('connect', () => {
                 this.addNotification('Connected To Server.')
@@ -55,6 +57,11 @@ const vm = new Vue ({
                 if (message.recipient === this.originPublicKey) {
                     // Decrypt the message text in the webworker thread
                     message.text = await this.getWebWorkerResponse('decrypt', message.text)
+
+                    // Fill in message sender - obtained from local map so can't be spoofed
+                    message.senderNickname = this.nicknameMap.get(message.sender)
+
+                    // Push message to message array
                     this.messages.push(message)
                 }
             })
@@ -71,8 +78,9 @@ const vm = new Vue ({
                 this.addNotification(`Joined Room - ${this.currentRoom}`)
                 this.sendPublicKey()
 
-                // Clear stored names when room Joined
+                // Clear stored names when room joined and set sender's nickname
                 this.nicknameMap = new Map()
+                this.nicknameMap.set(this.originPublicKey, this.nickname)
             })
 
             // Save public key and name when received
@@ -111,7 +119,7 @@ const vm = new Vue ({
         },
 
         /** Encrypt and emit the current draft message */
-        async sendMessage () {
+        async sendMessage() {
             // Don't send message if there is nothing to send
             if (!this.draft || this.draft === '') { return }
 
@@ -119,7 +127,8 @@ const vm = new Vue ({
             let message = Immutable.Map({
                 text: this.draft,
                 recipient: this.destinationPublicKey,
-                sender: this.originPublicKey
+                sender: this.originPublicKey,
+                senderNickname: this.nickname // This is set when message received
             })
 
             // Reset the UI input draft text
@@ -140,7 +149,7 @@ const vm = new Vue ({
             },
 
             /** Join the specified chatroom */
-            joinRoom () {
+            joinRoom() {
                 if (this.pendingRoom !== this.currentRoom && this.originPublicKey) {
                     this.addNotification(`Connecting to Room - ${this.pendingRoom}`)
 
@@ -154,20 +163,20 @@ const vm = new Vue ({
             },
 
             /** Add message to UI, and scroll the view to display the new message. */
-            addMessage (message) {
+            addMessage(message) {
                 this.messages.push(message)
                 this.autoscroll(this.$refs.chatContainer)
             },
 
             /** Append a notification message in the UI */
-            addNotification (message) {
+            addNotification(message) {
                 const timestamp = new Date().toLocaleTimeString()
                 this.notifications.push({ message, timestamp })
                 this.autoscroll(this.$refs.notificationContainer)
             },
 
             /** Post a message to the webworker, and return a promise that will resolve with the response.  */
-            getWebWorkerResponse (messageType, messagePayload) {
+            getWebWorkerResponse(messageType, messagePayload) {
                 return new Promise((resolve, reject) => {
                     // Generate a random message id to identify the corresponding event callback
                     const messageId = Math.floor(Math.random() * 100000)
@@ -192,20 +201,35 @@ const vm = new Vue ({
                 })
             },
 
+            /** Change user's nickname */
+            changeNickname() {
+                // Check if nickname actually changed
+                if (this.nickname != this.nicknameMap.get(this.originPublicKey)) {
+                    // Send public key with nickname again and add notification
+                    this.addNotification(`Nickname changed from ${this.nicknameMap.get(this.originPublicKey)} to ${this.nickname}`)
+                    this.sendPublicKey()
+                }
+            },
+
             /** Emit the public key with name to all users in the chatroom */
-            sendPublicKey () {
+            sendPublicKey() {
                 if (this.originPublicKey) {
                     this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
                 }
             },
 
             /** Get key snippet for display purposes */
-            getKeySnippet (key) {
+            getKeySnippet(key) {
                 return key.slice(400, 416)
             },
 
+            /** Get shorter key snippet for display purposes */
+            getShortKeySnippet(key) {
+                return key.slice(400, 405)
+            },
+
             /** Autoscoll DOM element to bottom */
-            autoscroll (element) {
+            autoscroll(element) {
                 if (element) { element.scrollTop = element.scrollHeight }
             }
         }
