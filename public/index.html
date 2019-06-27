@@ -52,9 +52,11 @@
             <div class="keys full-width">
                 <h1>KEYS</h1>
                 <h2>DESTINATION PUBLIC KEYS</h2>
-                <div class="key red" v-for="key in destinationPublicKeys">
-                    <h3>TRUNCATED IDENTIFIER - {{ getKeySnippet(key) }}</h3>
-                    <p>{{ key }}</p>
+                <div v-if="destinationPublicKeys.length">
+                    <div class="key red" v-for="key in destinationPublicKeys" >
+                        <h3>TRUNCATED IDENTIFIER - {{ getKeySnippet(key) }}</h3>
+                        <p>{{ key }}</p>
+                    </div>
                 </div>
                 <h2 v-else>Waiting for someone to join room...</h2>
                 <div class="divider"></div>
