@@ -1,5 +1,5 @@
 # Encrypted Online Chat App
-##### Written using Node.js
+### Written using Node.js
 
 *Based off https://blog.patricktriest.com/building-an-encrypted-messenger-with-javascript/*
 
