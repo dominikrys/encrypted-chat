@@ -10,7 +10,7 @@ const vm = new Vue({
             cryptWorker: null,
             socket: null,
             originPublicKey: null,
-            destinationPublicKey: null,
+            destinationPublicKeys: [],
             messages: [],
             notifications: [],
             currentRoom: null,
@@ -81,19 +81,22 @@ const vm = new Vue({
                 this.addNotification(`Joined Room - ${this.currentRoom}`)
                 this.sendPublicKey()
 
-                // Clear stored names when room joined and set sender's nickname
+                // Clear stored names and keys when room joined and set sender's nickname
                 this.nicknameMap = new Map()
                 this.nicknameMap.set(this.originPublicKey, this.nickname)
+                this.destinationPublicKeys = []
             })
 
             // Save public key and name when received
             this.socket.on('PUBLIC_KEY', (key) => {
                 // Check if user already in nicknameMap
-                if (this.nicknameMap.has(key[0])){
+                if (this.nicknameMap.has(key[0])) {
+                    // Already in nicknameMap, add notification saying name change
                     this.addNotification(`${this.nicknameMap.get(key[0])} has changed their name to ${key[1]}`)
                 } else {
+                    // New public key, add notification and put key into destination array
                     this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
-                    this.destinationPublicKey = key[0]
+                    this.destinationPublicKeys.push(key[0])
                 }
 
                 // Update user's name
@@ -103,138 +106,169 @@ const vm = new Vue({
             // Clear destination public key if other user leaves room
             this.socket.on('user disconnected', () => {
                 this.notify(`User Disconnected - ${this.getKeySnippet(this.destinationKey)}`)
-                this.destinationPublicKey = null
-            })
 
-            // Notify user that the room they are attempting to join is full
-            this.socket.on('ROOM_FULL', () => {
-                this.addNotification(`Cannot join ${this.pendingRoom}, room is full`)
-
-                // Join a random room as a fallback
-                this.pendingRoom = Math.floor(Math.random() * 1000)
-                this.joinRoom()
-            })
-
-            // Notify room that someone attempted to join
-            this.socket.on('INTRUSION_ATTEMPT', () => {
-                this.addNotification('A third user attempted to join the room.')
-            })
-        },
-
-        /** Encrypt and emit the current draft message */
-        async sendMessage() {
-            // Don't send message if there is nothing to send
-            if (!this.draft || this.draft === '') { return }
-
-            // Use immutable.js to avoid unintended side-effects.
-            let message = Immutable.Map({
-                text: this.draft,
-                recipient: this.destinationPublicKey,
-                sender: this.originPublicKey,
-                senderNickname: this.nickname,
-                time: new Date().toLocaleTimeString()
-            })
-
-            // Reset the UI input draft text
-            this.draft = ''
-
-            // Instantly add (unencrypted) message to local UI
-            this.addMessage(message.toObject())
-
-            if (this.destinationPublicKey) {
+                /*TODO
+                this.destinationPublicKeys.forEach(function(item, index, array) {
                 // Encrypt message with the public key of the other user
                 const encryptedText = await this.getWebWorkerResponse(
-                    'encrypt', [ message.get('text'), this.destinationPublicKey ])
-                    const encryptedMsg = message.set('text', encryptedText)
+                'encrypt', [ message.get('text'), item ])
 
-                    // Emit the encrypted message
-                    this.socket.emit('MESSAGE', encryptedMsg.toObject())
-                }
-            },
+                // Set message recipient
+                message = message.set('recipient', item)
 
-            /** Join the specified chatroom */
-            joinRoom() {
-                if (this.pendingRoom !== this.currentRoom && this.originPublicKey) {
-                    this.addNotification(`Connecting to Room - ${this.pendingRoom}`)
+                // Set encrypted text in message
+                const encryptedMsg = message.set('text', encryptedText)
 
-                    // Reset room state variables
-                    this.messages = []
-                    this.destinationPublicKey = null
-
-                    // Emit room join request.
-                    this.socket.emit('JOIN', this.pendingRoom)
-                }
-            },
-
-            /** Add message to UI, and scroll the view to display the new message. */
-            addMessage(message) {
-                this.messages.push(message)
-                this.autoscroll(this.$refs.chatContainer)
-            },
-
-            /** Append a notification message in the UI */
-            addNotification(message) {
-                const timestamp = new Date().toLocaleTimeString()
-                this.notifications.push({ message, timestamp })
-                this.autoscroll(this.$refs.notificationContainer)
-            },
-
-            /** Post a message to the webworker, and return a promise that will resolve with the response.  */
-            getWebWorkerResponse(messageType, messagePayload) {
-                return new Promise((resolve, reject) => {
-                    // Generate a random message id to identify the corresponding event callback
-                    const messageId = Math.floor(Math.random() * 100000)
-
-                    // Post the message to the webworker
-                    this.cryptWorker.postMessage([messageType, messageId].concat(messagePayload))
-
-                    // Create a handler for the webworker message event
-                    const handler = function (e) {
-                        // Only handle messages with the matching message id
-                        if (e.data[0] === messageId) {
-                            // Remove the event listener once the listener has been called.
-                            e.currentTarget.removeEventListener(e.type, handler)
-
-                            // Resolve the promise with the message payload.
-                            resolve(e.data[1])
-                        }
-                    }
-
-                    // Assign the handler to the webworker 'message' event.
-                    this.cryptWorker.addEventListener('message', handler)
-                })
-            },
-
-            /** Change user's nickname */
-            changeNickname() {
-                // Check if nickname actually changed
-                if (this.nickname != this.nicknameMap.get(this.originPublicKey)) {
-                    // Send public key with nickname again and add notification
-                    this.addNotification(`Nickname changed from ${this.nicknameMap.get(this.originPublicKey)} to ${this.nickname}`)
-                    this.sendPublicKey()
-                }
-            },
-
-            /** Emit the public key with name to all users in the chatroom */
-            sendPublicKey() {
-                if (this.originPublicKey) {
-                    this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
-                }
-            },
-
-            /** Get key snippet for display purposes */
-            getKeySnippet(key) {
-                return key.slice(400, 416)
-            },
-
-            /** Get shorter key snippet for display purposes */
-            getShortKeySnippet(key) {
-                return key.slice(400, 405)
-            },
-
-            /** Autoscoll DOM element to bottom */
-            autoscroll(element) {
-                if (element) { element.scrollTop = element.scrollHeight }
+                // Emit the encrypted message
+                this.socket.emit('MESSAGE', encryptedMsg.toObject())
             }
-        }
+        })
+
+        this.destinationPublicKeys = null
+        */
     })
+
+    // Notify user that the room they are attempting to join is full
+    this.socket.on('ROOM_FULL', () => {
+        this.addNotification(`Cannot join ${this.pendingRoom}, room is full`)
+
+        // Join a random room as a fallback
+        this.pendingRoom = Math.floor(Math.random() * 1000)
+        this.joinRoom()
+    })
+
+    // Notify room that someone attempted to join over max user limit
+    this.socket.on('MAX_USERS_REACHED', () => {
+        this.addNotification('Another user has tried to join the room, however it\'s full')
+    })
+},
+
+/** Encrypt and emit the current draft message */
+async sendMessage() {
+    // Don't send message if there is nothing to send
+    if (!this.draft || this.draft === '') {
+        return
+    }
+
+    // Use immutable.js to avoid unintended side-effects.
+    let message = Immutable.Map({
+        text: this.draft,
+        recipient: null,
+        sender: this.originPublicKey,
+        senderNickname: this.nickname,
+        time: new Date().toLocaleTimeString()
+    })
+
+    // Reset the UI input draft text
+    this.draft = ''
+
+    // Instantly add (unencrypted) message to local UI
+    this.addMessage(message.toObject())
+
+    // Loop through every destination, encrypting the message separately
+    for (var  i = 0; i < this.destinationPublicKeys.length; i++) {
+        const encryptedText = await this.getWebWorkerResponse(
+            'encrypt', [message.get('text'), this.destinationPublicKeys[i]])
+
+            // Set message recipient
+            message = message.set('recipient', this.destinationPublicKeys[i])
+
+            // Set encrypted text in message
+            const encryptedMsg = message.set('text', encryptedText)
+
+            // Emit the encrypted message
+            this.socket.emit('MESSAGE', encryptedMsg.toObject())
+        }
+    },
+
+    /** Join the specified chatroom */
+    joinRoom() {
+        if (this.pendingRoom !== this.currentRoom && this.originPublicKey) {
+            this.addNotification(`Connecting to Room - ${this.pendingRoom}`)
+
+            // Reset room state variables
+            this.messages = []
+            this.destinationPublicKeys = []
+
+            // Emit room join request.
+            this.socket.emit('JOIN', this.pendingRoom)
+        }
+    },
+
+    /** Add message to UI, and scroll the view to display the new message. */
+    addMessage(message) {
+        this.messages.push(message)
+        this.autoscroll(this.$refs.chatContainer)
+    },
+
+    /** Append a notification message in the UI */
+    addNotification(message) {
+        const timestamp = new Date().toLocaleTimeString()
+        this.notifications.push({
+            message,
+            timestamp
+        })
+        this.autoscroll(this.$refs.notificationContainer)
+    },
+
+    /** Post a message to the webworker, and return a promise that will resolve with the response.  */
+    getWebWorkerResponse(messageType, messagePayload) {
+        return new Promise((resolve, reject) => {
+            // Generate a random message id to identify the corresponding event callback
+            const messageId = Math.floor(Math.random() * 100000)
+
+            // Post the message to the webworker
+            this.cryptWorker.postMessage([messageType, messageId].concat(messagePayload))
+
+            // Create a handler for the webworker message event
+            const handler = function(e) {
+                // Only handle messages with the matching message id
+                if (e.data[0] === messageId) {
+                    // Remove the event listener once the listener has been called.
+                    e.currentTarget.removeEventListener(e.type, handler)
+
+                    // Resolve the promise with the message payload.
+                    resolve(e.data[1])
+                }
+            }
+
+            // Assign the handler to the webworker 'message' event.
+            this.cryptWorker.addEventListener('message', handler)
+        })
+    },
+
+    /** Change user's nickname */
+    changeNickname() {
+        // Check if nickname actually changed
+        if (this.nickname != this.nicknameMap.get(this.originPublicKey)) {
+            // Send public key with nickname again and add notification
+            this.addNotification(`Nickname changed from ${this.nicknameMap.get(this.originPublicKey)} to ${this.nickname}`)
+            this.sendPublicKey()
+        }
+    },
+
+    /** Emit the public key with name to all users in the chatroom */
+    sendPublicKey() {
+        if (this.originPublicKey) {
+            this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
+        }
+    },
+
+    /** Get key snippet for display purposes */
+    getKeySnippet(key) {
+        return key.slice(400, 416)
+    },
+
+    /** Get shorter key snippet for display purposes */
+    getShortKeySnippet(key) {
+        return key.slice(400, 405)
+    },
+
+    /** Autoscoll DOM element to bottom */
+    autoscroll(element) {
+        if (element) {
+            element.scrollTop = element.scrollHeight
+        }
+    }
+}
+})

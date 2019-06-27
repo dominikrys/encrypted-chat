@@ -14,6 +14,9 @@ const io = require('socket.io')(http)
 // Serve web app directory
 app.use(express.static('public'))
 
+// Maximum amount of users in chat rooms
+var userLimit = 2
+
 /** Manage behavior of each client socket connection */
 io.on('connection', (socket) => {
     console.log(`User Connected - Socket ID ${socket.id}`)
@@ -27,12 +30,12 @@ io.on('connection', (socket) => {
         let room = io.sockets.adapter.rooms[roomName]
 
         // Reject join request if room already has more than 1 connection
-        if (room && room.length > 1) {
+        if (room && room.length > userLimit) {
             // Notify user that their join request was rejected
             io.to(socket.id).emit('ROOM_FULL', null)
 
-            // Notify room that someone tried to join
-            socket.broadcast.to(roomName).emit('INTRUSION_ATTEMPT', null)
+            // Notify room that someone tried to join over user limit
+            socket.broadcast.to(roomName).emit('MAX_USERS_REACHED', null)
         } else {
             // Leave current room
             socket.leave(currentRoom)
