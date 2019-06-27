@@ -30,12 +30,12 @@ io.on('connection', (socket) => {
         let room = io.sockets.adapter.rooms[roomName]
 
         // Reject join request if room already has more than 1 connection
-        if (room && room.length > userLimit) {
+        if (room && room.length > userLimit - 1) {
             // Notify user that their join request was rejected
-            io.to(socket.id).emit('ROOM_FULL', null)
+            io.to(socket.id).emit('ROOM_FULL', userLimit)
 
             // Notify room that someone tried to join over user limit
-            socket.broadcast.to(roomName).emit('MAX_USERS_REACHED', null)
+            socket.broadcast.to(roomName).emit('MAX_USERS_REACHED', userLimit)
         } else {
             // Leave current room
             socket.leave(currentRoom)
@@ -57,7 +57,7 @@ io.on('connection', (socket) => {
 
     /** Broadcast a received message to the room */
     socket.on('MESSAGE', (msg) => {
-        console.log(`New Message - ${msg.text}`)
+        console.log(`New Message on socket: ${socket.id}`)
         socket.broadcast.to(currentRoom).emit('MESSAGE', msg)
     })
 

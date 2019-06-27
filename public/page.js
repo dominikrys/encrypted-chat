@@ -129,8 +129,8 @@ const vm = new Vue({
     })
 
     // Notify user that the room they are attempting to join is full
-    this.socket.on('ROOM_FULL', () => {
-        this.addNotification(`Cannot join ${this.pendingRoom}, room is full`)
+    this.socket.on('ROOM_FULL', (limit) => {
+        this.addNotification(`Cannot join ${this.pendingRoom}, room is full. Max capacity: ${limit}`)
 
         // Join a random room as a fallback
         this.pendingRoom = Math.floor(Math.random() * 1000)
@@ -138,8 +138,8 @@ const vm = new Vue({
     })
 
     // Notify room that someone attempted to join over max user limit
-    this.socket.on('MAX_USERS_REACHED', () => {
-        this.addNotification('Another user has tried to join the room, however it\'s full')
+    this.socket.on('MAX_USERS_REACHED', (limit) => {
+        this.addNotification(`Another user tried joining however the room has reached max capacity of: ${limit}`)
     })
 },
 
