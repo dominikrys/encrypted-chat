@@ -15,7 +15,10 @@ const io = require('socket.io')(http)
 app.use(express.static('public'))
 
 // Maximum amount of users in chat rooms
-var userLimit = 2
+var userLimit = 32
+
+// Map holding various sockets and the public key that has been generated for them
+var socketMap = new Map()
 
 /** Manage behavior of each client socket connection */
 io.on('connection', (socket) => {
@@ -57,18 +60,26 @@ io.on('connection', (socket) => {
 
     /** Broadcast a received message to the room */
     socket.on('MESSAGE', (msg) => {
-        console.log(`New Message on socket: ${socket.id}`)
+        console.log(`Message sent on socket: ${socket.id}`)
         socket.broadcast.to(currentRoom).emit('MESSAGE', msg)
     })
 
     /** Broadcast a new publickey to the room */
     socket.on('PUBLIC_KEY', (key) => {
+        // Associate this public key with the socket
+        socketMap.set(socket.id, key)
+
+        // Broadcast public key to room
         socket.broadcast.to(currentRoom).emit('PUBLIC_KEY', key)
     })
 
     /** Broadcast a disconnection notification to the room */
     socket.on('disconnect', () => {
-        socket.broadcast.to(currentRoom).emit('USER_DISCONNECTED', null)
+        // Get public key of disconnected user and send to current room
+        socket.broadcast.to(currentRoom).emit('USER_DISCONNECTED', socketMap.get(socket.id))
+
+        // Remove socket from socketMap as it's not needed any more
+        socketMap.delete(socket.id)
     })
 })
 
