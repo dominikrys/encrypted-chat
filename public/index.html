@@ -51,15 +51,13 @@
             <div class="divider"></div>
             <div class="keys full-width">
                 <h1>KEYS</h1>
-                <!-- TODO: add this back in somehow
-                <h2>THEIR PUBLIC KEY</h2>
-                <div class="key red" v-if="destinationPublicKey">
-                    <h3>TRUNCATED IDENTIFIER - {{ getKeySnippet(destinationPublicKey) }}</h3>
-                    <p>{{ destinationPublicKey }}</p>
+                <h2>DESTINATION PUBLIC KEYS</h2>
+                <div class="key red" v-for="key in destinationPublicKeys">
+                    <h3>TRUNCATED IDENTIFIER - {{ getKeySnippet(key) }}</h3>
+                    <p>{{ key }}</p>
                 </div>
-                <h2 v-else>Waiting for second user to join room...</h2>
+                <h2 v-else>Waiting for someone to join room...</h2>
                 <div class="divider"></div>
-            -->
                 <h2>YOUR PUBLIC KEY</h2>
                 <div class="key green" v-if="originPublicKey">
                     <h3>TRUNCATED IDENTIFIER - {{ getKeySnippet(originPublicKey) }}</h3>
