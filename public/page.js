@@ -91,8 +91,11 @@ const vm = new Vue({
             this.socket.on('PUBLIC_KEY', (key) => {
                 // Check if user already in nicknameMap
                 if (this.nicknameMap.has(key[0])) {
-                    // Already in nicknameMap, add notification saying name change
-                    this.addNotification(`${this.nicknameMap.get(key[0])} has changed their name to ${key[1]}`)
+                    // Check if the user has actually changed their name
+                    if (this.nicknameMap.get(key[0]) != key[1]) {
+                        // Already in nicknameMap, add notification saying name change
+                        this.addNotification(`${this.nicknameMap.get(key[0])} has changed their name to ${key[1]}`)
+                    }
                 } else {
                     // New public key, add notification and put key into destination array
                     this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
@@ -104,13 +107,13 @@ const vm = new Vue({
             })
 
             // Clear destination public key if other user leaves room
-            this.socket.on('user disconnected', (key) => {
+            this.socket.on('USER_DISCONNECTED', (key) => {
                 // Add notification that user disconnected
                 this.notify(`User Disconnected - ${this.getKeySnippet(key)}`)
 
                 // Find the disconethis.destinationPublicKeys.indexOf(key)ncted user's public key in the public key list and remove it
                 var index = this.destinationPublicKeys.indexOf(key)
-                
+
                 if (index > -1) {
                     this.destinationPublicKeys.splice(index, 1)
                 }
