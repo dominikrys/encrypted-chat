@@ -88,28 +88,28 @@ const vm = new Vue({
             })
 
             // Save public key and name when received
-            this.socket.on('PUBLIC_KEY', (key) => {
+            this.socket.on('PUBLIC_KEY', (keyName) => {
                 // Check if user already in nicknameMap
-                if (this.nicknameMap.has(key[0])) {
+                if (this.nicknameMap.has(keyName[0])) {
                     // Check if the user has actually changed their name
-                    if (this.nicknameMap.get(key[0]) != key[1]) {
+                    if (this.nicknameMap.get(keyName[0]) != keyName[1]) {
                         // Already in nicknameMap, add notification saying name change
-                        this.addNotification(`${this.nicknameMap.get(key[0])} has changed their name to ${key[1]}`)
+                        this.addNotification(`${this.nicknameMap.get(keyName[0])} has changed their name to ${keyName[1]}`)
                     }
                 } else {
                     // New public key, add notification and put key into destination array
-                    this.addNotification(`Public Key Received - ${this.getKeySnippet(key[0])}`)
-                    this.destinationPublicKeys.push(key[0])
+                    this.addNotification(`Public Key Received - ${this.getKeySnippet(keyName[0])}`)
+                    this.destinationPublicKeys.push(keyName[0])
                 }
 
                 // Update user's name
-                this.nicknameMap.set(key[0], key[1])
+                this.nicknameMap.set(keyName[0], keyName[1])
             })
 
             // Clear destination public key if other user leaves room
             this.socket.on('USER_DISCONNECTED', (key) => {
                 // Add notification that user disconnected
-                this.notify(`User Disconnected - ${this.getKeySnippet(key)}`)
+                this.addNotification(`User disconnected: ${this.nicknameMap.get(key)} [${this.getKeySnippet(key)}]`)
 
                 // Find the disconethis.destinationPublicKeys.indexOf(key)ncted user's public key in the public key list and remove it
                 var index = this.destinationPublicKeys.indexOf(key)
@@ -186,6 +186,23 @@ const vm = new Vue({
                 }
             },
 
+            /** Emit the public key with name to all users in the chatroom */
+            sendPublicKey() {
+                if (this.originPublicKey) {
+                    this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
+                }
+            },
+
+            /** Change user's nickname */
+            changeNickname() {
+                // Check if nickname actually changed
+                if (this.nickname != this.nicknameMap.get(this.originPublicKey)) {
+                    // Send public key with nickname again and add notification
+                    this.addNotification(`Nickname changed from ${this.nicknameMap.get(this.originPublicKey)} to ${this.nickname}`)
+                    this.sendPublicKey()
+                }
+            },
+
             /** Add message to UI, and scroll the view to display the new message. */
             addMessage(message) {
                 this.messages.push(message)
@@ -226,23 +243,6 @@ const vm = new Vue({
                     // Assign the handler to the webworker 'message' event.
                     this.cryptWorker.addEventListener('message', handler)
                 })
-            },
-
-            /** Change user's nickname */
-            changeNickname() {
-                // Check if nickname actually changed
-                if (this.nickname != this.nicknameMap.get(this.originPublicKey)) {
-                    // Send public key with nickname again and add notification
-                    this.addNotification(`Nickname changed from ${this.nicknameMap.get(this.originPublicKey)} to ${this.nickname}`)
-                    this.sendPublicKey()
-                }
-            },
-
-            /** Emit the public key with name to all users in the chatroom */
-            sendPublicKey() {
-                if (this.originPublicKey) {
-                    this.socket.emit('PUBLIC_KEY', [this.originPublicKey, this.nickname])
-                }
             },
 
             /** Get key snippet for display purposes */

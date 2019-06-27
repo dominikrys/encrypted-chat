@@ -22,7 +22,7 @@ var socketMap = new Map()
 
 /** Manage behavior of each client socket connection */
 io.on('connection', (socket) => {
-    console.log(`User Connected - Socket ID ${socket.id}`)
+    console.log(`User connected - socket ID: ${socket.id}`)
 
     // Store the room that the socket is connected to
     let currentRoom = null
@@ -65,16 +65,21 @@ io.on('connection', (socket) => {
     })
 
     /** Broadcast a new publickey to the room */
-    socket.on('PUBLIC_KEY', (key) => {
-        // Associate this public key with the socket
-        socketMap.set(socket.id, key)
+    socket.on('PUBLIC_KEY', (keyName) => {
+        // Associate this public key with the socket if not there already
+        if (!socketMap.has(socket.id)) {
+            socketMap.set(socket.id, keyName[0])
+        }
 
         // Broadcast public key to room
-        socket.broadcast.to(currentRoom).emit('PUBLIC_KEY', key)
+        socket.broadcast.to(currentRoom).emit('PUBLIC_KEY', keyName)
     })
 
     /** Broadcast a disconnection notification to the room */
     socket.on('disconnect', () => {
+        // Add noitification
+        console.log(`User disconnected - socket ID: ${socket.id}`)
+
         // Get public key of disconnected user and send to current room
         socket.broadcast.to(currentRoom).emit('USER_DISCONNECTED', socketMap.get(socket.id))
 
