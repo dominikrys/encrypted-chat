@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Chat App</title>
-    <meta name="description" content="A minimalist, open-source, end-to-end RSA-2048 encrypted chat application.">
+    <meta name="description" content="An open-source end-to-end RSA-2048 encrypted chat application">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
@@ -27,7 +27,6 @@
             </div>
         </div>
         <div class="info-container full-width">
-            <!--TODO: think of a better way of implementing this?-->
             <h1>SET NICKNAME</h1>
             <div class="room-select">
                 <input type="text" class="full-width" placeholder="Nickname" id="name-input" v-model="nickname" @keyup.enter="changeNickname()">
