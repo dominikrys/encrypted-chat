@@ -1,10 +1,12 @@
-# Encrypted Online Chat App
-### Written using Node.js
+# Encrypted Chat Web App
 
-*Based off https://blog.patricktriest.com/building-an-encrypted-messenger-with-javascript/*
+Chat web using Node.js, Vue.js and Socket.io which encrypts users' messages end-to-end using RSA-2048.
 
-## Features added:
+Written with help from [Patrick Triest's blog post](https://blog.patricktriest.com/building-an-encrypted-messenger-with-javascript/).
+
+## Features
+
+* End-to-end encryption using RSA-2048
+* Chat rooms featuring group chats
 * Nicknames
-* Group chats
-* Timestamps + other message styling
-* (WIP) media sharing, more control over rooms, elgamal
+* Timestamps + message styling
